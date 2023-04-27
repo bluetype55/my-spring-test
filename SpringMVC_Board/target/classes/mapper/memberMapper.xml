@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--  1. parameterType 1번만 사용, 생략가능 -->
+<!--  2. select태그만  resultType 명시 해야함.  -->
+<!--  3. #{변수},  #{필드명},  #{key} -->
+<!--  4. 리스트 반환시 리스트요소 타입만 명시 -->
+
+<!-- IMemberDao 전용 Mapper: 회원관련 sql -->
+<!-- <mapper namespace="memberMapper"> -->
+<mapper namespace="com.board.icia.dao.IMemberDao">
+
+	<select id="access" parameterType="member" resultType="boolean">
+		SELECT COUNT(*) FROM MEMBER WHERE M_ID=#{m_id} AND M_PW=#{m_pw}
+	</select>
+
+	<insert id="join" parameterType="member">
+		INSERT INTO M VALUES(#{m_id},#{m_pw},#{m_name},#{m_birth},#{m_addr},#{m_phone},default)
+	</insert>
+	
+	<select id="getSecurityPw" parameterType="String" resultType="String">
+		SELECT M_PW FROM M WHERE M_ID=#{m_id}
+	</select>
+	<select id="getMemberInfo" parameterType="String" resultType="member">
+		SELECT * FROM MINFO WHERE M_ID=#{m_id}
+	</select>
+	
+	<select id="testMap" parameterType="Map" resultType="Map">
+		SELECT M_ID "m_id", m_name "m_name", m_point "m_point",m_grade "m_grade" 
+		FROM MINFO WHERE 
+		<if test="search!=''">
+			${cName}=#{search} AND
+		</if>
+        ROWNUM =1
+	</select>
+	
+	<select id="testParams" resultType="Map">
+		SELECT M_ID "m_id", m_name "m_name", m_point "m_point",m_grade "m_grade" 
+		FROM MINFO WHERE 
+		<if test="point!=null">
+			${cName}=#{point} AND    	
+		</if> 
+        ROWNUM =1
+	</select>
+	
+	
+	
+</mapper>

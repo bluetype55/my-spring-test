@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--  1. parameterType 1번만 사용, 생략가능 -->
+<!--  2. select태그만  resultType 명시 해야함.  -->
+<!-- #{변수},  #{필드명},  #{key} : 문자열일때 ''붙임 -->
+<!--  ${변수},  ${필드명},  ${key}  : 문자열일때 ''붙이지 않음-->
+
+<!-- IBoardDao 전용 Mapper: 게시판관련 sql -->
+<mapper namespace="com.board.icia.dao.IBoardDao">
+	<select id="getBoardList" parameterType="Integer" resultType="board">
+		<!-- <![CDATA[
+		 SELECT * FROM BLIST WHERE  RN >=#{pageNum}*10-9 AND RN<=#{pageNum}*10
+		]]> -->
+		
+		<!-- 게시글이 많을 때 속도를 업하기 위해 -->
+		<!-- /*+INDEX_DESC(B PK_B_NUM)*/ : 인덱스를 타고 내림차순 검색 -->
+		<!-- From BOARD B 라면 힌트에 B를 써야 힌트를 이용한다. -->
+		<!-- 서브쿼리에서 WHERE가 SELECT보다 먼저처리되므로 RN별칭 쓰면 안됨  -->
+		<!-- summernote이용해서 본문에 파일을 첨부시 b_contents 제외후 검색할것(검색 느려짐)  -->
+		<![CDATA[
+		 SELECT * FROM (
+		    SELECT /*+INDEX_DESC(B PK_B_NUM)*/  
+		   	ROWNUM RN, B.b_num,B.b_title,B.b_date,B.b_id,B.b_views
+		    FROM B
+		    WHERE ROWNUM<=#{pageNum}*10
+		    )
+		 WHERE RN>=#{pageNum}*10-9   
+		]]>
+	</select>
+	<resultMap type="boardFile" id="mapForBoardFile">
+		<id column="BF_NUM" property="bf_num"/>
+		<result column="BF_ORIGNAME" property="bf_origname"	/>
+		<result column="BF_SYSNAME" property="bf_sysname"	/>
+	</resultMap>
+	
+	<resultMap type="board" id="mapForRead">
+		<id column="B_NUM" property="b_num" />
+		<result column="B_TITLE" property="b_title" />
+		<result column="B_CONTENTS" property="b_contents" 
+		 	javaType="java.lang.String" jdbcType="NCLOB" />
+		<result column="B_ID" property="b_id" />	
+		<result column="B_DATE" property="b_date" />	
+		<result column="B_VIEWS" property="b_views" />	
+		
+		<collection property="bfList" javaType="java.util.ArrayList" 
+			resultMap="mapForBoardFile"/>
+	</resultMap>
+	
+	<select id="getContents" parameterType="Integer" resultMap="mapForRead">
+		<![CDATA[
+		SELECT * FROM B LEFT OUTER JOIN BF
+		ON B.B_NUM=BF.BF_BNUM
+		WHERE B_NUM=#{bnum}
+		]]>
+	</select>
+	
+	<select id="getReplyList" resultType="reply">
+		<!-- SELECT * FROM R  WHERE R_BNUM=#{bnum} 
+		ORDER BY R_DATE DESC -->
+		<!-- SELECT /*+INDEX_DESC(R PK_R_NUM)*/ R.* FROM R  WHERE R_BNUM=#{bnum} --> 
+		
+		SELECT R_NUM, R_BNUM, R_CONTENTS,R_ID,TO_CHAR(R_DATE,'YYYY-MM-DD,HH:MI:SS') AS R_DATE 
+		FROM R  WHERE R_BNUM=#{bnum} 
+		ORDER BY R_DATE DESC
+	</select>
+	
+	<insert id="boardWrite">
+		INSERT INTO B VALUES(BOARD_SEQ.NEXTVAL, #{b_title},#{b_contents},#{b_id},DEFAULT,DEFAULT)
+	</insert>
+	<update id="updateViews" parameterType="Integer">
+		UPDATE BOARD SET B_VIEWS=B_VIEWS+1 WHERE B_NUM=#{bnum} 
+	</update>
+	
+	<insert id="replyInsert" parameterType="reply">
+		INSERT INTO R VALUES(REPLY_SEQ.NEXTVAL,#{r_bnum},#{r_contents},#{r_id},default)
+	</insert>
+	<!--useGeneratedKeys="true" 자동증가값을 얻을 수 있다.
+		keyProperty="b_num"(필드명) 오라클은 생략가능, my-sql은 명시할 것 -->
+	<insert id="boardWriteSelectKey"  useGeneratedKeys="true" keyProperty="b_num">
+		INSERT INTO B VALUES(#{b_num},#{b_title},#{b_contents},#{b_id},DEFAULT,DEFAULT)
+		<selectKey keyProperty="b_num" resultType="int" order="BEFORE">
+			SELECT BOARD_SEQ.NEXTVAL FROM DUAL  <!-- 100 -->
+		</selectKey> 
+	</insert>
+	<insert id="fileInsert" parameterType="Map">
+		INSERT INTO BF VALUES(BF_SEQ.NEXTVAL,#{bnum}, #{origFileName},#{sysFileName})
+	</insert>
+</mapper>
