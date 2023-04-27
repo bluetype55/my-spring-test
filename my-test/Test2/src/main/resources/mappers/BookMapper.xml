@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- selectAllBooks() 메서드와 매핑될 SQL -->
+<mapper namespace="com.test.project.dao.BookDAO">
+<select id="selectAllBooks" resultType="com.test.project.dto.BookDTO">
+  SELECT * FROM book;
+</select>
+
+<!-- selectBookById() 메서드와 매핑될 SQL -->
+<select id="selectBookById" parameterType="int" resultType="com.test.project.dto.BookDTO">
+  SELECT * FROM book WHERE id = #{id};
+</select>
+
+<!-- insertBook() 메서드와 매핑될 SQL -->
+<insert id="insertBook" parameterType="com.test.project.dto.BookDTO">
+  INSERT INTO book (author, published_at, title) VALUES (#{author}, #{publishedAt}, #{title});
+</insert>
+
+<!-- updateBook() 메서드와 매핑될 SQL -->
+<update id="updateBook" parameterType="com.test.project.dto.BookDTO">
+  UPDATE book SET author = #{author}, published_at = #{publishedAt}, title = #{title} WHERE id = #{id};
+</update>
+
+<!-- deleteBook() 메서드와 매핑될 SQL -->
+<delete id="deleteBook" parameterType="int">
+  DELETE FROM book WHERE id = #{id};
+</delete>
+</mapper>
