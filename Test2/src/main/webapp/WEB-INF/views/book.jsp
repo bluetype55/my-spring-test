@@ -13,7 +13,7 @@
 
 	<script>
     function getAllBooks() {
-        fetch('/project/books/')
+        fetch('/books/')
             .then(response => response.json())
             .then(data => {
                 const bookList = document.getElementById("book-list");
